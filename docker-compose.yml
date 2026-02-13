@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  travel-wallet-bot:
+    build: .
+    container_name: travel-wallet-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Volume для сохранения базы данных SQLite
+      - ./data:/app/data
+    environment:
+      # Переопределяем путь к базе данных для использования volume
+      - DB_PATH=/app/data/travel_wallet.db
