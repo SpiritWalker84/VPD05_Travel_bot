@@ -341,25 +341,25 @@ def handle_initial_amount(message):
         db.set_user_state(user_id, None)
         
         # Отправляем сообщение о создании путешествия
-        success_msg = bot.send_message(
+        bot.send_message(
             message.chat.id,
             f"✅ Путешествие создано!\n\n"
             f"📍 {from_country} ({from_currency}) → {to_country} ({to_currency})\n"
             f"💰 Начальный баланс: {amount:,.2f} {from_currency} = {converted_amount:,.2f} {to_currency}"
         )
         
-        # Сохраняем message_id меню если его еще нет
+        # Всегда показываем главное меню после создания путешествия
         menu_message_id = db.get_menu_message_id(user_id)
-        if not menu_message_id:
-            # Создаем новое меню после сообщения о создании
-            show_main_menu(message.chat.id, user_id)
-        else:
-            # Обновляем существующее меню
+        if menu_message_id:
+            # Пытаемся обновить существующее меню
             try:
                 show_main_menu(message.chat.id, user_id, menu_message_id, edit=True)
-            except:
-                # Если не удалось обновить, создаем новое
+            except Exception:
+                # Если не удалось обновить (сообщение удалено или недоступно), создаем новое
                 show_main_menu(message.chat.id, user_id)
+        else:
+            # Если меню еще не было создано, создаем новое
+            show_main_menu(message.chat.id, user_id)
     else:
         bot.send_message(
             message.chat.id,
