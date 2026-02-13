@@ -294,18 +294,31 @@ def handle_initial_amount(message):
         if "info" in conversion_data:
             info = conversion_data["info"]
             if "quote" in info:
-                converted_amount = float(info["quote"])
+                # quote - это курс для 1 единицы, нужно умножить на сумму
+                quote_value = float(info["quote"])
+                converted_amount = amount * quote_value
             elif "rate" in info:
                 # Если есть курс, вычисляем результат
-                converted_amount = amount * float(info["rate"])
+                rate_value = float(info["rate"])
+                converted_amount = amount * rate_value
         
         if converted_amount is None and "result" in conversion_data:
-            converted_amount = float(conversion_data["result"])
+            # result обычно содержит результат конвертации для всей суммы
+            result_value = float(conversion_data["result"])
+            # Проверяем: если результат слишком большой, это может быть курс
+            if result_value > amount * 1000:
+                converted_amount = amount * result_value
+            else:
+                converted_amount = result_value
         
         if converted_amount is None and "query" in conversion_data:
             query = conversion_data["query"]
             if "result" in query:
-                converted_amount = float(query["result"])
+                result_value = float(query["result"])
+                if result_value > amount * 1000:
+                    converted_amount = amount * result_value
+                else:
+                    converted_amount = result_value
         
         if converted_amount is None:
             # Если структура не распознана, используем введенный курс
@@ -327,21 +340,26 @@ def handle_initial_amount(message):
     if trip_id:
         db.set_user_state(user_id, None)
         
-        # Возвращаемся в главное меню с обновленной информацией
-        menu_message_id = db.get_menu_message_id(user_id)
-        if menu_message_id:
-            # Обновляем существующее меню
-            show_main_menu(message.chat.id, user_id, menu_message_id, edit=True)
-        else:
-            # Создаем новое меню
-            show_main_menu(message.chat.id, user_id)
-        
-        bot.send_message(
+        # Отправляем сообщение о создании путешествия
+        success_msg = bot.send_message(
             message.chat.id,
             f"✅ Путешествие создано!\n\n"
             f"📍 {from_country} ({from_currency}) → {to_country} ({to_currency})\n"
             f"💰 Начальный баланс: {amount:,.2f} {from_currency} = {converted_amount:,.2f} {to_currency}"
         )
+        
+        # Сохраняем message_id меню если его еще нет
+        menu_message_id = db.get_menu_message_id(user_id)
+        if not menu_message_id:
+            # Создаем новое меню после сообщения о создании
+            show_main_menu(message.chat.id, user_id)
+        else:
+            # Обновляем существующее меню
+            try:
+                show_main_menu(message.chat.id, user_id, menu_message_id, edit=True)
+            except:
+                # Если не удалось обновить, создаем новое
+                show_main_menu(message.chat.id, user_id)
     else:
         bot.send_message(
             message.chat.id,

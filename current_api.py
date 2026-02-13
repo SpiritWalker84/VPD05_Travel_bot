@@ -106,15 +106,34 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> Optional[float]:
 
 
 # Маппинг стран к валютам (основные страны)
+# Приоритет русским названиям
 COUNTRY_TO_CURRENCY = {
-    "Россия": "RUB", "Russia": "RUB", "RU": "RUB",
-    "США": "USD", "USA": "USD", "United States": "USD", "US": "USD",
-    "Евросоюз": "EUR", "EU": "EUR", "Europe": "EUR",
+    # Россия
+    "Россия": "RUB", "Russia": "RUB", "RU": "RUB", "РФ": "RUB",
+    # США
+    "США": "USD", "Соединенные Штаты": "USD", "Соединенные Штаты Америки": "USD", 
+    "USA": "USD", "United States": "USD", "US": "USD",
+    # Евросоюз и страны ЕС
+    "Евросоюз": "EUR", "ЕС": "EUR", "EU": "EUR", "Europe": "EUR",
     "Германия": "EUR", "Germany": "EUR", "DE": "EUR",
     "Франция": "EUR", "France": "EUR", "FR": "EUR",
-    "Великобритания": "GBP", "UK": "GBP", "United Kingdom": "GBP", "GB": "GBP",
-    "Китай": "CNY", "China": "CNY", "CN": "CNY",
+    "Италия": "EUR", "Italy": "EUR", "IT": "EUR",
+    "Испания": "EUR", "Spain": "EUR", "ES": "EUR",
+    "Нидерланды": "EUR", "Netherlands": "EUR", "NL": "EUR",
+    "Бельгия": "EUR", "Belgium": "EUR", "BE": "EUR",
+    "Австрия": "EUR", "Austria": "EUR", "AT": "EUR",
+    "Португалия": "EUR", "Portugal": "EUR", "PT": "EUR",
+    "Греция": "EUR", "Greece": "EUR", "GR": "EUR",
+    "Финляндия": "EUR", "Finland": "EUR", "FI": "EUR",
+    "Ирландия": "EUR", "Ireland": "EUR", "IE": "EUR",
+    # Великобритания
+    "Великобритания": "GBP", "Англия": "GBP", "UK": "GBP", 
+    "United Kingdom": "GBP", "GB": "GBP",
+    # Китай
+    "Китай": "CNY", "КНР": "CNY", "China": "CNY", "CN": "CNY",
+    # Япония
     "Япония": "JPY", "Japan": "JPY", "JP": "JPY",
+    # Другие страны
     "Канада": "CAD", "Canada": "CAD", "CA": "CAD",
     "Австралия": "AUD", "Australia": "AUD", "AU": "AUD",
     "Швейцария": "CHF", "Switzerland": "CHF", "CH": "CHF",
@@ -122,11 +141,22 @@ COUNTRY_TO_CURRENCY = {
     "Индия": "INR", "India": "INR", "IN": "INR",
     "Бразилия": "BRL", "Brazil": "BRL", "BR": "BRL",
     "Мексика": "MXN", "Mexico": "MXN", "MX": "MXN",
-    "Южная Корея": "KRW", "South Korea": "KRW", "KR": "KRW",
+    "Южная Корея": "KRW", "Корея": "KRW", "South Korea": "KRW", "KR": "KRW",
     "Сингапур": "SGD", "Singapore": "SGD", "SG": "SGD",
     "Таиланд": "THB", "Thailand": "THB", "TH": "THB",
-    "ОАЭ": "AED", "UAE": "AED", "United Arab Emirates": "AED", "AE": "AED",
+    "ОАЭ": "AED", "Объединенные Арабские Эмираты": "AED", 
+    "UAE": "AED", "United Arab Emirates": "AED", "AE": "AED",
     "Саудовская Аравия": "SAR", "Saudi Arabia": "SAR", "SA": "SAR",
+    "Норвегия": "NOK", "Norway": "NOK", "NO": "NOK",
+    "Швеция": "SEK", "Sweden": "SEK", "SE": "SEK",
+    "Дания": "DKK", "Denmark": "DKK", "DK": "DKK",
+    "Польша": "PLN", "Poland": "PLN", "PL": "PLN",
+    "Чехия": "CZK", "Czech Republic": "CZK", "CZ": "CZK",
+    "Венгрия": "HUF", "Hungary": "HUF", "HU": "HUF",
+    "Израиль": "ILS", "Israel": "ILS", "IL": "ILS",
+    "ЮАР": "ZAR", "Южно-Африканская Республика": "ZAR", 
+    "South Africa": "ZAR", "ZA": "ZAR",
+    "Новая Зеландия": "NZD", "New Zealand": "NZD", "NZ": "NZD",
 }
 
 
@@ -142,13 +172,20 @@ def get_currency_by_country(country: str) -> Optional[str]:
     """
     country_normalized = country.strip()
     
-    # Проверяем точное совпадение
+    # Сначала проверяем точное совпадение (приоритет русским названиям)
     if country_normalized in COUNTRY_TO_CURRENCY:
         return COUNTRY_TO_CURRENCY[country_normalized]
     
     # Проверяем без учета регистра
     for key, currency in COUNTRY_TO_CURRENCY.items():
         if key.lower() == country_normalized.lower():
+            return currency
+    
+    # Проверяем частичное совпадение (для случаев типа "Соединенные Штаты Америки")
+    country_lower = country_normalized.lower()
+    for key, currency in COUNTRY_TO_CURRENCY.items():
+        key_lower = key.lower()
+        if country_lower in key_lower or key_lower in country_lower:
             return currency
     
     # Если не найдено, возвращаем None
